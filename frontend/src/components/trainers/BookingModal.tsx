@@ -1,10 +1,9 @@
 import { useState } from 'react'
 
-type Props = { open: boolean; onClose: () => void; onConfirm: (data: any) => void }
+type BookingData = { session: 'one-time' | 'monthly'; date: string; time: string }
+type Props = { open: boolean; onClose: () => void; onConfirm: (data: BookingData) => void; loading?: boolean }
 
-const slots = ['08:00', '09:00', '10:00', '17:00', '18:00']
-
-export default function BookingModal({ open, onClose, onConfirm }: Props) {
+export default function BookingModal({ open, onClose, onConfirm, loading }: Props) {
   const [session, setSession] = useState<'one-time'|'monthly'>('one-time')
   const [date, setDate] = useState('')
   const [time, setTime] = useState('')
@@ -29,15 +28,27 @@ export default function BookingModal({ open, onClose, onConfirm }: Props) {
           <div>
             <label className="block mb-1">Time Slot</label>
             <div className="flex flex-wrap gap-2">
-              {slots.map(s => (
-                <button key={s} onClick={()=>setTime(s)} className={`px-3 py-2 rounded-lg text-sm ${time===s ? 'bg-blue-600 text-white' : 'bg-gray-200 hover:bg-gray-300'}`}>{s}</button>
+              {['Morning', 'Afternoon', 'Evening'].map(s => (
+                <button
+                  key={s}
+                  onClick={()=>setTime(s)}
+                  className={`px-3 py-2 rounded-full text-sm font-semibold transition-all ${time===s ? 'bg-gradient-to-r from-orange-500 to-teal-500 text-white shadow-lg' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+                >
+                  {s}
+                </button>
               ))}
             </div>
           </div>
         </div>
         <div className="mt-5 flex justify-end gap-2">
-          <button onClick={onClose} className="inline-flex items-center rounded-lg border px-4 py-2 text-sm">Cancel</button>
-          <button onClick={()=>onConfirm({ session, date, time })} className="inline-flex items-center rounded-lg bg-blue-600 text-white px-4 py-2 text-sm shadow hover:bg-blue-700" disabled={!date || !time}>Confirm</button>
+          <button onClick={onClose} className="inline-flex items-center rounded-full border px-4 py-2 text-sm font-semibold text-gray-700 hover:border-orange-400 hover:text-orange-500 transition-colors">Cancel</button>
+          <button
+            onClick={()=>onConfirm({ session, date, time })}
+            className="inline-flex items-center rounded-full bg-gradient-to-r from-orange-500 to-teal-500 text-white px-5 py-2 text-sm font-semibold shadow-lg hover:from-orange-600 hover:to-teal-600 transition-all duration-200 hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={!date || !time || loading}
+          >
+            {loading ? 'Sending…' : 'Confirm'}
+          </button>
         </div>
       </div>
     </div>

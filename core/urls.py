@@ -7,6 +7,7 @@ from .views import (
     LogoutView,
     CustomTokenRefreshView,
     MeView,
+    GoogleLoginView,
     PasswordResetRequestView,
     PasswordResetConfirmView,
     GoalViewSet,
@@ -19,6 +20,7 @@ from .views import (
     DailyNutritionViewSet,
     ChatRoomViewSet,
     MessageViewSet,
+    MarkMessagesAsReadView,
     ProductViewSet,
     CartViewSet,
     OrderViewSet,
@@ -26,9 +28,16 @@ from .views import (
     calculator_bmi,
     calculator_tdee,
     calculator_body_fat,
+    TrainerViewSet,
+    TrainerHiringViewSet,
+    AdminStatsView,
+    AdminUserListView,
+    StripeWebhookView,
 )
 
 router = DefaultRouter()
+router.register(r"trainers", TrainerViewSet, basename="trainers")
+router.register(r"trainer-hiring", TrainerHiringViewSet, basename="trainer-hiring")
 router.register(r"goals", GoalViewSet, basename="goals")
 router.register(r"progress", ProgressLogViewSet, basename="progress")
 router.register(r"workout-categories", WorkoutCategoryViewSet, basename="workout-categories")
@@ -48,8 +57,13 @@ urlpatterns = [
     path("auth/logout/", LogoutView.as_view(), name="auth-logout"),
     path("auth/refresh/", CustomTokenRefreshView.as_view(), name="token-refresh"),
     path("auth/me/", MeView.as_view(), name="auth-me"),
+    path("auth/google/", GoogleLoginView.as_view(), name="auth-google"),
     path("auth/password-reset/", PasswordResetRequestView.as_view(), name="password-reset"),
     path("auth/password-reset/confirm/", PasswordResetConfirmView.as_view(), name="password-reset-confirm"),
+    path("chat/messages/mark_as_read/", MarkMessagesAsReadView.as_view(), name="mark-messages-as-read"),
+    path("admin/stats/", AdminStatsView.as_view(), name="admin-stats"),
+    path("admin/users/", AdminUserListView.as_view(), name="admin-users"),
+    path("payments/stripe/webhook/", StripeWebhookView.as_view(), name="stripe-webhook"),
     path("", include(router.urls)),
     path("stats/", statistics_view, name="stats"),
     path("calc/protein/", calculator_protein, name="calc-protein"),

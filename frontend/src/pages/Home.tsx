@@ -3,7 +3,7 @@ import Trainers from '../components/Landing/Trainers'
 
 export default function Home() {
   return (
-    <main>
+    <main className="bg-white min-h-screen">
       <Hero />
       <Trainers />
     </main>

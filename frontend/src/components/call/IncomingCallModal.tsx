@@ -22,7 +22,7 @@ export const IncomingCallModal: React.FC<IncomingCallModalProps> = ({
       <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
         {/* Header */}
         <div className="text-center mb-6">
-          <div className="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className="w-20 h-20 bg-gradient-to-r from-orange-500 to-teal-500 rounded-full flex items-center justify-center mx-auto mb-4">
             <span className="text-2xl font-bold text-white">
               {callerName.charAt(0).toUpperCase()}
             </span>
@@ -38,7 +38,7 @@ export const IncomingCallModal: React.FC<IncomingCallModalProps> = ({
         {/* Call Type Icon */}
         <div className="flex justify-center mb-6">
           <div className={`p-4 rounded-full ${
-            callType === 'video' ? 'bg-green-100' : 'bg-blue-100'
+            callType === 'video' ? 'bg-emerald-100' : 'bg-orange-100'
           }`}>
             {callType === 'video' ? (
               <Video className="w-8 h-8 text-green-600" />
@@ -64,8 +64,8 @@ export const IncomingCallModal: React.FC<IncomingCallModalProps> = ({
             onClick={() => onAccept(callType)}
             className={`flex-1 flex items-center justify-center space-x-2 text-white py-3 px-4 rounded-xl transition-colors ${
               callType === 'video' 
-                ? 'bg-green-500 hover:bg-green-600' 
-                : 'bg-blue-500 hover:bg-blue-600'
+                ? 'bg-gradient-to-r from-orange-500 to-teal-500 hover:from-orange-600 hover:to-teal-600' 
+                : 'bg-gradient-to-r from-orange-500 to-teal-500 hover:from-orange-600 hover:to-teal-600'
             }`}
           >
             {callType === 'video' ? (
@@ -82,7 +82,7 @@ export const IncomingCallModal: React.FC<IncomingCallModalProps> = ({
           <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
             callType === 'video' 
               ? 'bg-green-100 text-green-800' 
-              : 'bg-blue-100 text-blue-800'
+              : 'bg-orange-100 text-orange-700'
           }`}>
             {callType === 'video' ? 'Video Call' : 'Voice Call'}
           </span>

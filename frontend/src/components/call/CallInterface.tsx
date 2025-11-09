@@ -82,7 +82,7 @@ export const CallInterface: React.FC<CallInterfaceProps> = ({
           {callType === 'voice' && (
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="text-center text-white">
-                <div className="w-32 h-32 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                <div className="w-32 h-32 bg-gradient-to-r from-orange-500 to-teal-500 rounded-full flex items-center justify-center mx-auto mb-6">
                   <span className="text-4xl font-bold">
                     {callerName ? callerName.charAt(0).toUpperCase() : '?'}
                   </span>

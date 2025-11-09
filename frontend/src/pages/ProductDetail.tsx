@@ -1,7 +1,8 @@
 import { useParams } from 'react-router-dom';
-import { getProductById, addToCart } from '../services/store';
+import { getProductById, addToCart, Product } from '../services/store';
 import { useEffect, useState } from 'react';
 import Skeleton from '../components/ui/Skeleton';
+import { formatCurrency } from '../utils/format';
 
 export default function ProductDetailPage() {
 	const { id } = useParams();
@@ -76,7 +77,7 @@ return (
 				{images.length > 1 && (
 					<div className="mt-3 grid grid-cols-4 gap-3">
 						{images.map((img: any, i: number) => (
-							<button key={i} onClick={() => setActive(i)} className={`aspect-square rounded-lg overflow-hidden border ${active===i?'border-blue-600':'border-transparent'}`}>
+							<button key={i} onClick={() => setActive(i)} className={`aspect-square rounded-lg overflow-hidden border ${active===i ? 'border-orange-500' : 'border-transparent'}`}>
                             <img src={img.image} onError={(e)=>{(e.currentTarget as HTMLImageElement).src='https://via.placeholder.com/120x120?text=No+Image'}} alt="thumb" className="w-full h-full object-cover" />
 							</button>
 						))}
@@ -87,7 +88,7 @@ return (
 			{/* Info */}
 			<div>
 				<h1 className="text-3xl font-bold text-gray-900">{product.name}</h1>
-				<div className="mt-2 text-blue-600 text-2xl font-bold">${product.price.toFixed(2)}</div>
+				<div className="mt-2 text-orange-600 text-2xl font-bold">{formatCurrency(product.price)}</div>
 				<div className="mt-2 text-sm text-gray-500">{product.category}</div>
 				<p className="mt-4 text-gray-700">{product.description}</p>
 
@@ -112,10 +113,10 @@ return (
 					<button 
 						onClick={add} 
 						disabled={product.stock_quantity === 0}
-						className={`inline-flex items-center rounded-lg px-5 py-2.5 ${
+						className={`inline-flex items-center rounded-full px-6 py-2.5 text-sm font-semibold transition-all ${
 							product.stock_quantity === 0 
-								? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
-								: 'bg-gray-800 text-white hover:bg-gray-900'
+								? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
+								: 'bg-gradient-to-r from-orange-500 to-teal-500 text-white shadow-lg hover:from-orange-600 hover:to-teal-600 hover:shadow-xl'
 						}`}
 					>
 						{product.stock_quantity === 0 ? 'Out of Stock' : 'Add to Cart'}

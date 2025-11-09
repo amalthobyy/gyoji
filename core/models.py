@@ -61,16 +61,33 @@ class TrainerHiring(models.Model):
         (SESSION_MONTHLY, "Monthly"),
     ]
 
+    PAYMENT_PENDING = "pending"
+    PAYMENT_REQUIRED = "requires_payment"
+    PAYMENT_PAID = "paid"
+    PAYMENT_FAILED = "failed"
+    PAYMENT_STATUS_CHOICES = [
+        (PAYMENT_PENDING, "Pending"),
+        (PAYMENT_REQUIRED, "Requires payment"),
+        (PAYMENT_PAID, "Paid"),
+        (PAYMENT_FAILED, "Failed"),
+    ]
+
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="hirings")
     trainer = models.ForeignKey(User, on_delete=models.CASCADE, related_name="trainer_hirings")
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default=STATUS_PENDING)
     start_date = models.DateField()
+    time_slot = models.CharField(max_length=32, blank=True)
     session_type = models.CharField(max_length=10, choices=SESSION_CHOICES)
+    amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    payment_status = models.CharField(max_length=20, choices=PAYMENT_STATUS_CHOICES, default=PAYMENT_PENDING)
+    stripe_checkout_session_id = models.CharField(max_length=255, blank=True)
+    stripe_payment_intent_id = models.CharField(max_length=255, blank=True)
+    paid_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self) -> str:
-        return f"Hiring(user={self.user.username}, trainer={self.trainer.username}, status={self.status})"
+        return f"Hiring(user={self.user.username}, trainer={self.trainer.username}, status={self.status}, payment={self.payment_status})"
 
 
 class TrainerReview(models.Model):
@@ -237,6 +254,7 @@ class Meal(models.Model):
     carbs = models.DecimalField(max_digits=6, decimal_places=2, default=0)
     fat = models.DecimalField(max_digits=6, decimal_places=2, default=0)
     ingredients = models.JSONField(default=list, blank=True)
+    image_url = models.URLField(blank=True)
 
     def __str__(self) -> str:
         return f"{self.name} ({self.get_meal_type_display()})"

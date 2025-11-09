@@ -1,13 +1,17 @@
-type Item = { name: string; subtitle: string; timing: string; dosage: string }
+import { useEffect, useState } from 'react'
+import { DietGoal, getRecommendedSupplements, SuggestedSupplement } from '../../services/nutrition'
 
-const items: Item[] = [
-  { name: 'Whey Protein', subtitle: 'Muscle Recovery', timing: 'Post-workout', dosage: '25g' },
-  { name: 'Creatine', subtitle: 'Strength & Power', timing: 'Pre/Post workout', dosage: '5g' },
-  { name: 'Multivitamin', subtitle: 'General Health', timing: 'With breakfast', dosage: '1 tablet' },
-  { name: 'Omega-3', subtitle: 'Heart Health', timing: 'With meals', dosage: '1000mg' },
-]
+type Props = {
+  goal: DietGoal
+}
 
-export default function Supplements() {
+export default function Supplements({ goal }: Props) {
+  const [items, setItems] = useState<SuggestedSupplement[]>([])
+
+  useEffect(() => {
+    getRecommendedSupplements(goal).then(setItems)
+  }, [goal])
+
   return (
     <div className="mt-8">
       <h4 className="font-semibold text-gray-900 mb-3">Recommended Supplements</h4>

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { getCart, cartTotals, createOrder, clearCart } from '../services/store';
 import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
+import { formatCurrency } from '../utils/format';
 
 export default function CheckoutPage() {
 	const [items, setItems] = useState<any[]>([]);
@@ -88,20 +89,32 @@ export default function CheckoutPage() {
 				<div className="mt-6">
 					<div className="text-sm font-medium text-gray-700 mb-2">Payment Method</div>
 					<div className="flex gap-3">
-						<button type="button" onClick={()=>setPayment('card')} className={`px-3 py-2 rounded-lg border ${payment==='card'?'border-blue-600 bg-blue-50':'border-gray-300'}`}>Card</button>
-						<button type="button" onClick={()=>setPayment('cod')} className={`px-3 py-2 rounded-lg border ${payment==='cod'?'border-blue-600 bg-blue-50':'border-gray-300'}`}>Cash on Delivery</button>
+						<button
+							type="button"
+							onClick={()=>setPayment('card')}
+							className={`px-3 py-2 rounded-full border transition-colors ${payment==='card' ? 'border-orange-500 bg-orange-50 text-orange-600 font-semibold' : 'border-gray-300 text-gray-700 hover:border-orange-300'}`}
+						>
+							Card
+						</button>
+						<button
+							type="button"
+							onClick={()=>setPayment('cod')}
+							className={`px-3 py-2 rounded-full border transition-colors ${payment==='cod' ? 'border-orange-500 bg-orange-50 text-orange-600 font-semibold' : 'border-gray-300 text-gray-700 hover:border-orange-300'}`}
+						>
+							Cash on Delivery
+						</button>
 					</div>
 				</div>
 
 				<div className="mt-6 flex items-center justify-between">
-					<div className="text-lg font-semibold">Total: ${totals.total.toFixed(2)}</div>
+					<div className="text-lg font-semibold">Total: {formatCurrency(totals.total)}</div>
 					<button 
 						type="submit"
 						disabled={submitting}
-						className={`rounded-lg px-5 py-2 ${
+						className={`rounded-full px-5 py-3 font-semibold shadow-lg transition-all duration-200 ${
 							submitting 
 								? 'bg-gray-400 cursor-not-allowed' 
-								: 'bg-blue-600 hover:bg-blue-700'
+								: 'bg-gradient-to-r from-orange-500 to-teal-500 hover:from-orange-600 hover:to-teal-600 hover:shadow-xl'
 						} text-white`}
 					>
 						{submitting ? 'Processing...' : 'Place Order'}

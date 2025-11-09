@@ -1,44 +1,72 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import WorkoutCard from '../components/workouts/WorkoutCard'
-import { api } from '../services/api'
+import { getWorkoutCategories, getWorkouts, Workout, WorkoutCategory } from '../services/workouts'
+import Skeleton from '../components/ui/Skeleton'
+import { toastPush } from '../services/toast-bridge'
 
-const TABS = ['Strength Training', 'Cardio', 'Flexibility'] as const
-
-type Workout = {
-  id: number
-  title: string
-  difficulty: 'Beginner' | 'Intermediate' | 'Advanced'
-  duration: number
-  calories: string
-  equipment: string
-  image: string
-  exercises: string[]
-  category: string
-}
-
-const mock: Workout[] = [
-  { id: 1, title: 'Upper Body Power', difficulty: 'Intermediate', duration: 45, calories: '350-450 cal', equipment: 'Dumbbells, Bench', image: 'https://images.unsplash.com/photo-1599987316645-88eb2b1aa0eb?q=80&w=1600&auto=format&fit=crop', exercises: ['Push-ups', 'Bench Press', 'Rows', 'Shoulder Press'], category: 'Strength Training' },
-  { id: 2, title: 'Lower Body Blast', difficulty: 'Beginner', duration: 40, calories: '300-400 cal', equipment: 'Bodyweight', image: 'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?q=80&w=1600&auto=format&fit=crop', exercises: ['Squats', 'Lunges', 'Deadlifts', 'Calf Raises'], category: 'Cardio' },
-]
+const difficulties = ['Beginner', 'Intermediate', 'Advanced']
 
 export default function WorkoutsPage() {
-  const [active, setActive] = useState<(typeof TABS)[number]>('Strength Training')
+  const [categories, setCategories] = useState<WorkoutCategory[]>([])
+  const [activeCategory, setActiveCategory] = useState<number | null>(null)
   const [query, setQuery] = useState('')
   const [difficulty, setDifficulty] = useState('')
-  const [items, setItems] = useState<Workout[]>(mock)
+  const [debouncedQuery, setDebouncedQuery] = useState('')
+  const [items, setItems] = useState<Workout[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    // Example API hook up: uncomment when backend has data
-    // const params: any = {}
-    // if (active) params.category = active
-    // if (difficulty) params.difficulty = difficulty.toLowerCase()
-    // if (query) params.search = query
-    // api.get('/workouts/', { params }).then(({ data }) => setItems(data.results || data))
-    const filtered = mock.filter(w => w.category === active && (!query || w.title.toLowerCase().includes(query.toLowerCase())) && (!difficulty || w.difficulty === difficulty as any))
-    setItems(filtered)
-  }, [active, query, difficulty])
+    let mounted = true
+    getWorkoutCategories()
+      .then((data) => {
+        if (!mounted) return
+        setCategories(data)
+        if (data.length > 0) {
+          setActiveCategory((prev) => prev ?? data[0].id)
+        }
+      })
+      .catch((err) => {
+        console.error(err)
+        setError('Unable to load workout categories right now.')
+      })
+    return () => {
+      mounted = false
+    }
+  }, [])
 
-  const difficulties = ['Beginner', 'Intermediate', 'Advanced']
+  useEffect(() => {
+    const id = window.setTimeout(() => setDebouncedQuery(query.trim()), 300)
+    return () => window.clearTimeout(id)
+  }, [query])
+
+  const fetchWorkouts = useCallback(async () => {
+    if (!activeCategory) return
+    setLoading(true)
+    setError(null)
+    try {
+      const data = await getWorkouts({
+        category: activeCategory,
+        difficulty: difficulty ? difficulty.toLowerCase() : undefined,
+        search: debouncedQuery || undefined,
+      })
+      setItems(data)
+      if (!data.length && debouncedQuery) {
+        toastPush('info', 'No workouts matched your search. Try adjusting your filters.')
+      }
+    } catch (err) {
+      console.error(err)
+      setError('Unable to load workouts right now.')
+    } finally {
+      setLoading(false)
+    }
+  }, [activeCategory, difficulty, debouncedQuery])
+
+  useEffect(() => {
+    fetchWorkouts()
+  }, [fetchWorkouts])
+
+  const tabs = useMemo(() => categories.map((c) => ({ id: c.id, label: c.name })), [categories])
 
   return (
     <div className="py-8 space-y-6">
@@ -49,24 +77,71 @@ export default function WorkoutsPage() {
 
       <div className="mx-auto max-w-6xl">
         <div className="flex flex-wrap items-center gap-2">
-          {TABS.map(t => (
-            <button key={t} onClick={() => setActive(t)} className={`px-4 py-2 rounded-full ${active===t ? 'bg-blue-600 text-white shadow' : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'}`}>{t}</button>
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveCategory(tab.id)}
+              className={`px-4 py-2 rounded-full font-semibold transition-all ${
+                activeCategory === tab.id
+                  ? 'bg-gradient-to-r from-orange-500 to-teal-500 text-white shadow-lg'
+                  : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              {tab.label}
+            </button>
           ))}
         </div>
 
         <div className="mt-4 grid sm:grid-cols-3 gap-3">
-          <input className="border border-gray-300 rounded-lg px-3 py-2 col-span-2" placeholder="Search workouts" value={query} onChange={e=>setQuery(e.target.value)} />
-          <select className="border border-gray-300 rounded-lg px-3 py-2" value={difficulty} onChange={e=>setDifficulty(e.target.value)}>
+          <input
+            className="border border-gray-300 rounded-lg px-3 py-2 col-span-2"
+            placeholder="Search workouts"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+          <select
+            className="border border-gray-300 rounded-lg px-3 py-2"
+            value={difficulty}
+            onChange={(e) => setDifficulty(e.target.value)}
+          >
             <option value="">All difficulties</option>
-            {difficulties.map(d => <option key={d} value={d}>{d}</option>)}
+            {difficulties.map((d) => (
+              <option key={d} value={d}>
+                {d}
+              </option>
+            ))}
           </select>
         </div>
 
-        <div className="mt-6 grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {items.map(w => (
-            <WorkoutCard key={w.id} image={w.image} title={w.title} difficulty={w.difficulty} duration={w.duration} calories={w.calories} equipment={w.equipment} exercises={w.exercises} />
-          ))}
-        </div>
+        {error && <p className="mt-6 text-sm text-red-600">{error}</p>}
+
+        {loading ? (
+          <div className="mt-6 grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {Array.from({ length: 6 }).map((_, idx) => (
+              <Skeleton key={idx} className="h-80 rounded-2xl" />
+            ))}
+          </div>
+        ) : items.length === 0 ? (
+          <div className="mt-10 rounded-3xl border border-dashed border-gray-300 bg-gray-50/80 p-10 text-center text-gray-600">
+            No workouts found for this combination. Try another category or difficulty level.
+          </div>
+        ) : (
+          <div className="mt-6 grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {items.map((w) => (
+              <WorkoutCard
+                key={w.id}
+                image={w.thumbnail}
+                title={w.title}
+                difficulty={w.difficulty_label as 'Beginner' | 'Intermediate' | 'Advanced'}
+                duration={w.duration}
+                calories={`${w.calories_burned} cal`}
+                equipment={w.equipment_needed}
+                exercises={Array.isArray(w.exercises_list) ? w.exercises_list : []}
+                videoUrl={w.video_url}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )

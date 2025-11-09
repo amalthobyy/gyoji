@@ -1,62 +1,86 @@
-import { Play, Search, Star } from 'lucide-react'
+import { Button } from "@/components/ui/button";
+import { ArrowRight, Play } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export default function Hero() {
   return (
-    <section className="relative overflow-hidden pt-14 pb-10 md:pt-20 md:pb-16">
-      <div className="mx-auto max-w-6xl px-4 grid md:grid-cols-2 gap-10 items-center">
-        <div className="order-2 md:order-1">
-          <h1 className="text-5xl lg:text-6xl font-extrabold tracking-tight text-gray-900">
-            Transform Your
-            <br />
-            Fitness Journey
+    <section className="relative overflow-hidden bg-white">
+      <div className="mx-auto w-full max-w-screen-xl px-4 sm:px-6 lg:px-8 py-16 sm:py-20 md:py-24">
+        <div className="mx-auto max-w-4xl text-center">
+          {/* Badge */}
+          <div className="mb-8 inline-flex items-center gap-2 rounded-full bg-orange-100 px-5 py-2.5 text-sm font-semibold text-orange-700 shadow-sm">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
+            </span>
+            Transform Your Fitness Journey
+          </div>
+
+          {/* Heading */}
+          <h1 className="mb-6 text-4xl font-extrabold tracking-tight text-gray-900 sm:text-5xl md:text-6xl lg:text-7xl">
+            Meet Your Perfect{' '}
+            <span className="block mt-2">
+              <span className="bg-gradient-to-r from-orange-500 to-orange-600 bg-clip-text text-transparent">
+                Fitness
+              </span>{' '}
+              <span className="bg-gradient-to-r from-teal-500 to-teal-600 bg-clip-text text-transparent">
+                Trainer
+              </span>
+            </span>
           </h1>
-          <p className="mt-4 text-gray-600 max-w-prose">
-            Connect with certified personal trainers, set achievable goals, and access personalized workout and
-            nutrition plans.
+
+          {/* Subheading */}
+          <p className="mb-10 mx-auto max-w-2xl text-lg leading-8 text-gray-600 sm:text-xl md:text-2xl">
+            Connect with certified trainers who understand your goals. Get personalized
+            workouts, real-time guidance, and achieve results faster than ever.
           </p>
-          <div className="mt-6 flex flex-wrap items-center gap-3">
-            <a href="#trainers" className="inline-flex items-center gap-2 rounded-full bg-blue-600 text-white px-6 py-3 shadow hover:bg-blue-700 transition">
-              <Search size={18} /> Find Your Trainer
-            </a>
-            <a href="#demo" className="inline-flex items-center gap-2 rounded-full border-2 border-gray-300 text-gray-700 px-6 py-3 hover:bg-gray-50 transition">
-              <Play size={18} /> Watch Demo
-            </a>
+
+          {/* CTA Buttons */}
+          <div className="flex flex-col items-center justify-center gap-4 sm:flex-row sm:gap-6">
+            <Link to="/trainers">
+              <Button variant="gradient" size="xl" className="group gap-2">
+                Find Your Trainer
+                <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
+              </Button>
+            </Link>
+            <Button variant="outline" size="xl" className="group gap-2 border-gray-300">
+              <Play className="h-5 w-5 fill-current" />
+              Watch Demo
+            </Button>
           </div>
 
-          <div className="mt-6 flex flex-wrap items-center gap-6 text-sm text-gray-600">
-            <div className="flex items-center gap-2"><Star className="text-amber-500" size={18} /><span>4.9/5 Rating</span></div>
-            <div className="flex items-center gap-2"><span className="font-semibold">10k+</span> Members</div>
-            <div className="flex items-center gap-2"><span className="font-semibold">Certified</span> Trainers</div>
-          </div>
-        </div>
-
-        <div className="order-1 md:order-2 relative">
-          <div className="relative rounded-2xl shadow-xl overflow-hidden bg-white">
-            <img
-              src="https://images.unsplash.com/photo-1599058917480-5c6e9cbb0d2c?q=80&w=1600&auto=format&fit=crop"
-              onError={(e)=>{(e.currentTarget as HTMLImageElement).src = 'https://via.placeholder.com/800x480?text=Fitness'}}
-              alt="Workout"
-              className="w-full h-[320px] md:h-[480px] object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
-          </div>
-
-          <div className="absolute left-4 bottom-6 md:left-6 md:bottom-8">
-            <div className="backdrop-blur-md bg-white/90 rounded-xl shadow-lg px-4 py-3 flex items-center gap-3 animate-[float_6s_ease-in-out_infinite]">
-              <div className="w-8 h-8 rounded-full bg-blue-600 text-white grid place-items-center text-xs">500+</div>
-              <div>
-                <p className="text-sm font-semibold text-gray-900">Success Stories</p>
-                <p className="text-xs text-gray-600">Achieved their goals</p>
+          {/* Stats */}
+          <div className="mt-16 grid grid-cols-1 gap-8 sm:grid-cols-3 sm:gap-10">
+            <div className="flex flex-col items-center">
+              <div className="text-5xl font-extrabold text-orange-500 sm:text-6xl md:text-7xl">
+                500+
+              </div>
+              <div className="mt-3 text-base font-semibold text-gray-700 sm:text-lg">
+                Certified Trainers
+              </div>
+            </div>
+            <div className="flex flex-col items-center">
+              <div className="text-5xl font-extrabold text-orange-500 sm:text-6xl md:text-7xl">
+                50K+
+              </div>
+              <div className="mt-3 text-base font-semibold text-gray-700 sm:text-lg">
+                Active Members
+              </div>
+            </div>
+            <div className="flex flex-col items-center">
+              <div className="flex items-center gap-2 text-5xl font-extrabold text-orange-500 sm:text-6xl md:text-7xl">
+                4.9
+                <svg className="h-8 w-8 fill-orange-500 sm:h-10 sm:w-10" viewBox="0 0 20 20">
+                  <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+                </svg>
+              </div>
+              <div className="mt-3 text-base font-semibold text-gray-700 sm:text-lg">
+                Average Rating
               </div>
             </div>
           </div>
         </div>
       </div>
-
-      <style>{`
-        @keyframes fadeIn { from { opacity: 0; transform: scale(1.02); } to { opacity: 1; transform: scale(1.05); } }
-        @keyframes float { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-6px) } }
-      `}</style>
     </section>
-  )
+  );
 }

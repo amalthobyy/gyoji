@@ -1,34 +1,32 @@
-import { Link } from 'react-router-dom'
-import { Product } from '../../services/store'
+import { ShoppingCart } from 'lucide-react'
+import { formatCurrency } from '../../utils/format'
 
-export default function ProductCard({ product, onAdd }: { product: Product; onAdd: (p: Product) => void }) {
-	const mainImage = product.images?.[0]?.image || 'https://via.placeholder.com/300x300?text=No+Image';
+type Props = {
+  product: {
+    id: number
+    name: string
+    description: string
+    price: number
+    primary_image?: string | null
+  }
+  onAdd: (id: number) => void
+}
 
-	function onImgError(e: React.SyntheticEvent<HTMLImageElement>) {
-		(e.currentTarget as HTMLImageElement).src = 'https://via.placeholder.com/300x300?text=No+Image'
-	}
-	
-	return (
-		<div className="bg-white rounded-xl shadow-xl overflow-hidden flex flex-col">
-			<Link to={`/store/${product.id}`} className="block aspect-[4/3] bg-gray-100">
-				<img src={mainImage} onError={onImgError} alt={product.name} className="w-full h-full object-cover" />
-			</Link>
-			<div className="p-4 flex-1 flex flex-col">
-				<Link to={`/store/${product.id}`} className="font-semibold text-gray-900 line-clamp-1">{product.name}</Link>
-				<div className="mt-1 text-blue-600 font-bold">${product.price.toFixed(2)}</div>
-				<div className="mt-1 text-sm text-gray-500">{product.category}</div>
-				<button 
-					onClick={() => onAdd(product)} 
-					disabled={product.stock_quantity === 0}
-					className={`mt-4 inline-flex items-center justify-center rounded-lg px-4 py-2 ${
-						product.stock_quantity === 0 
-							? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
-							: 'bg-gray-800 text-white hover:bg-gray-900'
-					}`}
-				>
-					{product.stock_quantity === 0 ? 'Out of Stock' : 'Add to Cart'}
-				</button>
-			</div>
-		</div>
-	)
+export default function ProductCard({ product, onAdd }: Props) {
+  return (
+    <article className="bg-white rounded-2xl shadow-xl overflow-hidden">
+      <img src={product.primary_image || 'https://images.unsplash.com/photo-1518611012118-696072aa579a?q=80&w=1200&auto=format&fit=crop'} alt={product.name} className="h-56 w-full object-cover" />
+      <div className="p-4 space-y-2">
+        <h3 className="font-semibold text-gray-900 text-lg">{product.name}</h3>
+        <p className="text-sm text-gray-600 line-clamp-2">{product.description}</p>
+        <div className="mt-1 text-orange-600 font-bold">{formatCurrency(product.price)}</div>
+        <button
+          onClick={() => onAdd(product.id)}
+          className="mt-3 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-orange-500 to-teal-500 text-white px-5 py-2.5 text-sm font-semibold shadow-lg hover:from-orange-600 hover:to-teal-600 transition-all duration-200 hover:shadow-xl"
+        >
+          <ShoppingCart size={16} /> Add to Cart
+        </button>
+      </div>
+    </article>
+  )
 }

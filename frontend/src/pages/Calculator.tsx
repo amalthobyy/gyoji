@@ -88,8 +88,8 @@ export default function CalculatorPage() {
 					<div>
 						<label className="text-sm text-gray-600">Gender</label>
 						<div className="mt-1 flex gap-2">
-							<button onClick={()=>setGender('male')} className={`px-3 py-2 rounded-lg border ${gender==='male'?'border-blue-600 bg-blue-50':'border-gray-300'}`}>Male</button>
-							<button onClick={()=>setGender('female')} className={`px-3 py-2 rounded-lg border ${gender==='female'?'border-blue-600 bg-blue-50':'border-gray-300'}`}>Female</button>
+							<button onClick={()=>setGender('male')} className={`px-3 py-2 rounded-full border transition-colors ${gender==='male'?'border-orange-500 bg-orange-50 text-orange-600 font-semibold':'border-gray-300 text-gray-700 hover:border-orange-300'}`}>Male</button>
+							<button onClick={()=>setGender('female')} className={`px-3 py-2 rounded-full border transition-colors ${gender==='female'?'border-orange-500 bg-orange-50 text-orange-600 font-semibold':'border-gray-300 text-gray-700 hover:border-orange-300'}`}>Female</button>
 						</div>
 					</div>
 					<div>
@@ -128,10 +128,10 @@ export default function CalculatorPage() {
 					</select>
 				</div>
 				<div className="mt-4">
-					<div className="text-3xl font-bold text-blue-600">{protein} g/day</div>
+					<div className="text-3xl font-bold text-orange-600">{protein} g/day</div>
 					<p className="text-sm text-gray-600">Aim for {Math.round(protein/3)} g per meal across 3 meals.</p>
 					<div className="h-2 bg-gray-200 rounded-full mt-3">
-						<div className="h-2 bg-blue-600 rounded-full" style={{ width: Math.min(100, Math.round((protein/ (2.2*weight))*100)) + '%' }} />
+						<div className="h-full bg-gradient-to-r from-orange-500 to-teal-500 rounded-full" style={{ width: Math.min(100, Math.round((protein/ (2.2*weight))*100)) + '%' }} />
 					</div>
 				</div>
 			</div>
@@ -185,7 +185,7 @@ export default function CalculatorPage() {
 					</div>
 					<div className="flex-1">
 						<div className="h-2 bg-gray-200 rounded-full">
-							<div className="h-2 bg-blue-600 rounded-full" style={{ width: Math.min(100, Math.max(0, bodyFat)) + '%' }} />
+							<div className={`h-2 bg-gradient-to-r from-orange-500 to-teal-500 rounded-full`} style={{ width: Math.min(100, Math.max(0, bodyFat)) + '%' }} />
 						</div>
 						<p className="text-xs text-gray-500 mt-1">General healthy range: Men 10-20%, Women 18-28%</p>
 					</div>

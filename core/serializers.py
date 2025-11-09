@@ -5,6 +5,7 @@ from django.core.mail import send_mail
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from rest_framework import serializers
+from urllib.parse import urlparse, parse_qs
 
 from .models import (
     Trainer,
@@ -35,37 +36,155 @@ User = get_user_model()
 
 class MessageSerializer(serializers.ModelSerializer):
     sender = serializers.PrimaryKeyRelatedField(read_only=True)
+    sender_name = serializers.SerializerMethodField()
+    sender_avatar = serializers.SerializerMethodField()
 
     class Meta:
         model = Message
-        fields = ["id", "chat_room", "sender", "content", "timestamp", "is_read"]
+        fields = ["id", "chat_room", "sender", "sender_name", "sender_avatar", "content", "timestamp", "is_read"]
         read_only_fields = ["timestamp", "is_read"]
+
+    def get_sender_name(self, obj):
+        return obj.sender.get_full_name() or obj.sender.username
+
+    def get_sender_avatar(self, obj):
+        if not obj.sender.profile_picture:
+            return None
+        request = self.context.get("request")
+        url = obj.sender.profile_picture.url
+        return request.build_absolute_uri(url) if request else url
 
 
 class ChatRoomSerializer(serializers.ModelSerializer):
     last_message = serializers.SerializerMethodField()
+    user_name = serializers.SerializerMethodField()
+    user_avatar = serializers.SerializerMethodField()
+    trainer_name = serializers.SerializerMethodField()
+    trainer_avatar = serializers.SerializerMethodField()
+    unread_count = serializers.SerializerMethodField()
 
     class Meta:
         model = ChatRoom
-        fields = ["id", "user", "trainer", "created_at", "last_message"]
-        read_only_fields = ["created_at"]
+        fields = [
+            "id",
+            "user",
+            "user_name",
+            "user_avatar",
+            "trainer",
+            "trainer_name",
+            "trainer_avatar",
+            "created_at",
+            "last_message",
+            "unread_count",
+        ]
+        read_only_fields = ["created_at", "user", "trainer"]
 
     def get_last_message(self, obj):
         msg = obj.messages.order_by("-timestamp").first()
-        return MessageSerializer(msg).data if msg else None
+        return MessageSerializer(msg, context=self.context).data if msg else None
+
+    def get_unread_count(self, obj):
+        request = self.context.get("request")
+        if not request or not request.user:
+            return 0
+        # Count unread messages that are not sent by the current user
+        return obj.messages.filter(is_read=False).exclude(sender=request.user).count()
+
+    def _absolute_url(self, picture):
+        if not picture:
+            return None
+        request = self.context.get("request")
+        url = picture.url
+        return request.build_absolute_uri(url) if request else url
+
+    def get_user_name(self, obj):
+        return obj.user.get_full_name() or obj.user.username
+
+    def get_user_avatar(self, obj):
+        return self._absolute_url(obj.user.profile_picture)
+
+    def get_trainer_name(self, obj):
+        return obj.trainer.get_full_name() or obj.trainer.username
+
+    def get_trainer_avatar(self, obj):
+        return self._absolute_url(obj.trainer.profile_picture)
 
 
 class TrainerSerializer(serializers.ModelSerializer):
+    user_id = serializers.IntegerField(source="user.id", read_only=True)
+    username = serializers.CharField(source="user.username", read_only=True)
+    email = serializers.EmailField(source="user.email", read_only=True)
+    name = serializers.SerializerMethodField()
+    bio = serializers.CharField(source="user.bio", allow_blank=True, required=False)
+    profile_picture = serializers.SerializerMethodField()
+    upload_profile_picture = serializers.ImageField(write_only=True, required=False, allow_null=True)
+
     class Meta:
         model = Trainer
         fields = [
             "id",
+            "user_id",
+            "username",
+            "name",
+            "email",
+            "profile_picture",
+            "bio",
             "specialization",
             "experience_years",
             "hourly_rate",
             "certifications",
             "rating",
+            "upload_profile_picture",
         ]
+        read_only_fields = [
+            "id",
+            "user_id",
+            "username",
+            "name",
+            "email",
+            "profile_picture",
+            "rating",
+        ]
+
+    def get_name(self, obj):
+        full_name = obj.user.get_full_name()
+        return full_name if full_name else obj.user.username
+
+    def get_profile_picture(self, obj):
+        picture = obj.user.profile_picture
+        if not picture:
+            return None
+        request = self.context.get("request")
+        url = picture.url
+        if request:
+            return request.build_absolute_uri(url)
+        return url
+
+    def update(self, instance, validated_data):
+        upload_picture = validated_data.pop("upload_profile_picture", None)
+        user_data = validated_data.pop("user", {})
+        bio = user_data.get("bio")
+
+        user_fields_to_update = []
+
+        if bio is not None:
+            instance.user.bio = bio
+            user_fields_to_update.append("bio")
+
+        if upload_picture is not None:
+            if upload_picture == "":
+                instance.user.profile_picture = None
+            else:
+                instance.user.profile_picture = upload_picture
+            user_fields_to_update.append("profile_picture")
+
+        if user_fields_to_update:
+            instance.user.save(update_fields=user_fields_to_update)
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        return instance
 
 
 class TrainerProfileSerializer(serializers.ModelSerializer):
@@ -83,20 +202,71 @@ class TrainerProfileSerializer(serializers.ModelSerializer):
 
 class TrainerHiringSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(read_only=True)
+    user_name = serializers.SerializerMethodField()
+    trainer_name = serializers.SerializerMethodField()
+    trainer_profile_picture = serializers.SerializerMethodField()
+    amount = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True, coerce_to_string=False)
+    payment_status = serializers.CharField(read_only=True)
+    paid_at = serializers.DateTimeField(read_only=True)
+    can_pay = serializers.SerializerMethodField()
 
     class Meta:
         model = TrainerHiring
         fields = [
             "id",
             "user",
+            "user_name",
             "trainer",
+            "trainer_name",
+            "trainer_profile_picture",
             "status",
             "start_date",
             "session_type",
+            "time_slot",
+            "amount",
+            "payment_status",
+            "paid_at",
+            "can_pay",
             "created_at",
             "updated_at",
         ]
-        read_only_fields = ["status", "created_at", "updated_at"]
+        read_only_fields = [
+            "user",
+            "amount",
+            "payment_status",
+            "paid_at",
+            "created_at",
+            "updated_at",
+            "can_pay",
+        ]
+
+    def get_user_name(self, obj):
+        return obj.user.get_full_name() or obj.user.username
+
+    def get_trainer_name(self, obj):
+        return obj.trainer.get_full_name() or obj.trainer.username
+
+    def get_trainer_profile_picture(self, obj):
+        request = self.context.get("request")
+        if obj.trainer.profile_picture:
+            return request.build_absolute_uri(obj.trainer.profile_picture.url) if request else obj.trainer.profile_picture.url
+        return None
+
+    def get_can_pay(self, obj):
+        return (
+            obj.status == TrainerHiring.STATUS_ACCEPTED
+            and obj.payment_status
+            in {TrainerHiring.PAYMENT_PENDING, TrainerHiring.PAYMENT_REQUIRED, TrainerHiring.PAYMENT_FAILED}
+            and obj.amount > 0
+        )
+
+    def validate(self, attrs):
+        request = self.context.get("request")
+        if request and request.method in {"PATCH", "PUT"}:
+            status = attrs.get("status")
+            if status and status not in dict(TrainerHiring.STATUS_CHOICES):
+                raise serializers.ValidationError({"status": "Invalid status"})
+        return super().validate(attrs)
 
 
 class TrainerReviewSerializer(serializers.ModelSerializer):
@@ -131,8 +301,18 @@ class UserSerializer(serializers.ModelSerializer):
             "fitness_level",
             "role",
             "trainer_profile",
+            "is_staff",
+            "is_superuser",
+            "date_joined",
         ]
-        read_only_fields = ["id", "role"]
+        read_only_fields = ["id", "role", "is_staff", "is_superuser", "date_joined"]
+        extra_kwargs = {
+            "first_name": {"required": False, "allow_blank": True},
+            "last_name": {"required": False, "allow_blank": True},
+            "bio": {"required": False, "allow_blank": True},
+            "fitness_level": {"required": False, "allow_blank": True},
+            "profile_picture": {"required": False, "allow_null": True},
+        }
 
 
 class RegistrationSerializer(serializers.ModelSerializer):
@@ -162,6 +342,7 @@ class RegistrationSerializer(serializers.ModelSerializer):
         user.save()
         if role == User.ROLE_TRAINER:
             Trainer.objects.create(user=user)
+            TrainerProfile.objects.get_or_create(user=user)
         return user
 
 
@@ -298,6 +479,8 @@ class WorkoutSerializer(serializers.ModelSerializer):
         source="category", queryset=WorkoutCategory.objects.all(), write_only=True
     )
     exercises = ExerciseSerializer(many=True, read_only=True)
+    difficulty_label = serializers.CharField(source="get_difficulty_level_display", read_only=True)
+    thumbnail = serializers.SerializerMethodField()
 
     class Meta:
         model = Workout
@@ -308,15 +491,37 @@ class WorkoutSerializer(serializers.ModelSerializer):
             "category",
             "category_id",
             "difficulty_level",
+            "difficulty_label",
             "duration",
             "calories_burned",
             "equipment_needed",
             "video_url",
+            "thumbnail",
             "exercises_list",
             "exercises",
             "created_at",
         ]
         read_only_fields = ["created_at"]
+
+    def get_thumbnail(self, obj):
+        url = obj.video_url or ""
+        if not url:
+            return "https://images.unsplash.com/photo-1546483875-ad9014c88eba?q=80&w=1200&auto=format&fit=crop"
+
+        parsed = urlparse(url)
+        host = parsed.netloc.lower()
+        video_id = None
+        if "youtu.be" in host:
+            video_id = parsed.path.lstrip("/")
+        elif "youtube.com" in host:
+            query = parse_qs(parsed.query)
+            video_id = query.get("v", [None])[0]
+            if not video_id and parsed.path.startswith("/embed/"):
+                video_id = parsed.path.split("/embed/")[-1]
+        if video_id:
+            return f"https://img.youtube.com/vi/{video_id}/hqdefault.jpg"
+
+        return "https://images.unsplash.com/photo-1546483875-ad9014c88eba?q=80&w=1200&auto=format&fit=crop"
 
 
 class UserWorkoutLogSerializer(serializers.ModelSerializer):
@@ -348,6 +553,7 @@ class MealSerializer(serializers.ModelSerializer):
             "carbs",
             "fat",
             "ingredients",
+            "image_url",
         ]
 
 
@@ -432,3 +638,4 @@ class CalculatorInputSerializer(serializers.Serializer):
         choices=["sedentary", "light", "moderate", "active", "very_active"],
     )
     goal = serializers.ChoiceField(choices=["weight_loss", "muscle_gain", "maintenance"])
+
